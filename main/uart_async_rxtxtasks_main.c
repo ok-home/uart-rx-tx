@@ -17,7 +17,7 @@
 
 static const int RX_BUF_SIZE = 1024;
 static const int RX_DATA_SIZE = 50000;
-
+// esp32s3 free pin
 #define TXD_PIN (GPIO_NUM_1)
 #define RXD_PIN (GPIO_NUM_2)
 
@@ -36,20 +36,11 @@ void init(void)
     uart_param_config(UART_NUM_1, &uart_config);
     uart_set_pin(UART_NUM_1, TXD_PIN, TXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 
+// connect RX & TX pin without wire, reeset tx connection
     gpio_set_direction(TXD_PIN, GPIO_MODE_INPUT_OUTPUT);
     esp_rom_gpio_connect_out_signal(TXD_PIN, UART_PERIPH_SIGNAL(UART_NUM_1, SOC_UART_TX_PIN_IDX), 0, 0);
 
 }
-
-int sendData(const char* logName, const char* data)
-{
-    const int len = strlen(data);
-    const int txBytes = uart_write_bytes(UART_NUM_1, data, len);
-    ESP_LOGI(logName, "Wrote %d bytes", txBytes);
-    return txBytes;
-}
-
-
 
 static void tx_task(void *arg)
 {
@@ -57,7 +48,6 @@ static void tx_task(void *arg)
     uint8_t* data_txd = (uint8_t*) calloc(RX_DATA_SIZE + 1,1);
     esp_log_level_set(TX_TASK_TAG, ESP_LOG_INFO);
     while (1) {
-        //sendData(TX_TASK_TAG, "Hello world");
         const int txBytes = uart_write_bytes(UART_NUM_1, data_txd, RX_DATA_SIZE);
         ESP_LOGI("UART_TX_TASK", "Wrote %d bytes", txBytes);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -74,15 +64,12 @@ static void rx_task(void *arg)
         if (rxBytes > 0) {
             data[rxBytes] = 0;
             ESP_LOGI(RX_TASK_TAG, "Read %d bytes", rxBytes);
-            //ESP_LOG_BUFFER_HEXDUMP(RX_TASK_TAG, data, rxBytes, ESP_LOG_INFO);
         }
     }
     free(data);
 }
-//#include "logic_analyzer_ws_server.h"
 void app_main(void)
 {
-//    logic_analyzer_ws_server();
     init();
     xTaskCreate(rx_task, "uart_rx_task", 1024 * 4, NULL, configMAX_PRIORITIES - 1, NULL);
     xTaskCreate(tx_task, "uart_tx_task", 1024 * 4, NULL, configMAX_PRIORITIES - 2, NULL);
