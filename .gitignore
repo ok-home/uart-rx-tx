@@ -1,0 +1,5 @@
+README.md
+build/
+.vscode/
+.devcontainer/
+sdkconfig.old
