@@ -16,7 +16,8 @@
 #include "soc/uart_periph.h"
 
 static const int RX_BUF_SIZE = 1024;
-static const int RX_DATA_SIZE = 50000;
+static const int RX_DATA_SIZE = 50;
+static const int TX_DATA_SIZE = 5;
 // esp32s3 free pin
 #define TXD_PIN (GPIO_NUM_1)
 #define RXD_PIN (GPIO_NUM_2)
@@ -45,10 +46,10 @@ void init(void)
 static void tx_task(void *arg)
 {
     static const char *TX_TASK_TAG = "TX_TASK";
-    uint8_t* data_txd = (uint8_t*) calloc(RX_DATA_SIZE + 1,1);
+    uint8_t* data_txd = (uint8_t*) calloc(TX_DATA_SIZE + 1,1);
     esp_log_level_set(TX_TASK_TAG, ESP_LOG_INFO);
     while (1) {
-        const int txBytes = uart_write_bytes(UART_NUM_1, data_txd, RX_DATA_SIZE);
+        const int txBytes = uart_write_bytes(UART_NUM_1, data_txd, TX_DATA_SIZE);
         ESP_LOGI("UART_TX_TASK", "Wrote %d bytes", txBytes);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
